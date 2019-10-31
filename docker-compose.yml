@@ -8,4 +8,4 @@ services:
     volumes:
       - /home/ubuntu/tunnel/bank:/bank
       - /home/ubuntu/tunnel/data:/data
-      - /home/ubuntu/tunnel/tests:/tests
+#      - /home/ubuntu/tunnel/tests:/tests
