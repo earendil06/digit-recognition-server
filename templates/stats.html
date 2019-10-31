@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<table>
+  <thead>
+  <tr>
+    <th>Digit</th>
+    <th>Total</th>
+    <th>Success</th>
+    <th>Failure</th>
+    <th>Ratio</th>
+  </tr>
+  </thead>
+  <tbody>
+  {% for k, v in results.items() %}
+  <tr>
+    <td>{{k}}</td>
+    <td>{{v['total']}}</td>
+    <td>{{v['success']}}</td>
+    <td>{{v['errors']}}</td>
+    <td>{{v['ratio']}}%</td>
+  </tr>
+  {% endfor %}
+  
+  </tbody>
+</table>
+{% endblock %}
