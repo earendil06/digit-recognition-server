@@ -1,0 +1,31 @@
+version: 2
+jobs:
+  build:
+    environment:
+      IMAGE_NAME: earendil06/server-tunnel
+      TAG: latest
+    docker:
+      - image: circleci/python:3.6-stretch
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build docker image
+          command: docker build -t $IMAGE_NAME:$TAG .
+      - run:
+          name: Login to DockerHub
+          command: docker login -u $DOCKER_USER -p $DOCKER_PASS
+      - run:
+          name: Deploy the docker image
+          command: docker push $IMAGE_NAME:$TAG
+
+      - run: ssh-keyscan vps.florentpastor.com >> ~/.ssh/known_hosts
+      - add_ssh_keys:
+          fingerprints:
+            - "25:1a:cb:cd:e7:e9:12:61:3b:2b:b0:9e:c2:0c:2e:c3"
+      - run:
+          name: Deploy over SSH
+          command: |
+            scp docker-compose.yml root@vps.florentpastor.com:~/tunnel
+            ssh root@vps.florentpastor.com docker-compose -f ~/tunnel/docker-compose.yml pull
+            ssh root@vps.florentpastor.com docker-compose -f ~/tunnel/docker-compose.yml up -d --force-recreate

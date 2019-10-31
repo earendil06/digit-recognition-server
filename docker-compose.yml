@@ -1,0 +1,11 @@
+version: '3'
+services:
+  server-tunnel:
+    container_name: server-tunnel
+    image: earendil06/server-tunnel:latest
+    ports:
+      - "5001:5000"
+    volumes:
+      - /root/tunnel/bank:/bank
+      - /root/tunnel/data:/data
+      - /root/tunnel/tests:/tests
