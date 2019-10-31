@@ -26,6 +26,6 @@ jobs:
       - run:
           name: Deploy over SSH
           command: |
-            scp docker-compose.yml root@vps.florentpastor.com:~/tunnel
-            ssh root@vps.florentpastor.com docker-compose -f ~/tunnel/docker-compose.yml pull
-            ssh root@vps.florentpastor.com docker-compose -f ~/tunnel/docker-compose.yml up -d --force-recreate
+            scp docker-compose.yml ubuntu@vps.florentpastor.com:~/tunnel
+            ssh ubuntu@vps.florentpastor.com docker-compose -f ~/tunnel/docker-compose.yml pull
+            ssh ubuntu@vps.florentpastor.com docker-compose -f ~/tunnel/docker-compose.yml up -d --force-recreate

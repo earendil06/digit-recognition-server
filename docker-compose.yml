@@ -6,6 +6,6 @@ services:
     ports:
       - "5001:5000"
     volumes:
-      - /root/tunnel/bank:/bank
-      - /root/tunnel/data:/data
-      - /root/tunnel/tests:/tests
+      - /home/ubuntu/tunnel/bank:/bank
+      - /home/ubuntu/tunnel/data:/data
+      - /home/ubuntu/tunnel/tests:/tests
