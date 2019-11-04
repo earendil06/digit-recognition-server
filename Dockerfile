@@ -1,6 +1,8 @@
 FROM jjanzic/docker-python3-opencv
 
-COPY recognize_digits.py ./templates/ /
+COPY recognize_digits.py /
+COPY templates /templates
+
 
 ENV FLASK_APP /recognize_digits.py
 

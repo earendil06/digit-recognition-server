@@ -1,76 +1,18 @@
 from flask import Flask, render_template
 from apscheduler.schedulers.background import BackgroundScheduler
-import cv2, imutils, os
-import numpy as np
+import cv2, imutils, os, uuid, datetime
 
 app = Flask(__name__)
 PORT = 5000
-
-
-def get_window():
-    # x1, x2, y1, y2
-    return [310, 365, 200, 250]
-
-
-def get_image_from_filename_night(file, window):
-    img = cv2.imread(file)[window[2]:window[3], window[0]:window[1]]
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    # darker
-    # lower_orange = np.array([0, 0, 50])
-    # upper_orange = np.array([35, 100, 255])
-    #
-    # very dark
-    lower_orange = np.array([0, 0, 50])
-    upper_orange = np.array([180, 100, 250])
-    mask = cv2.inRange(hsv, lower_orange, upper_orange)
-    mask = np.invert(mask)
-    return mask
-
-
-def get_image_from_filename_day(file, window):
-    img = cv2.imread(file)[window[2]:window[3], window[0]:window[1]]
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    lower_orange = np.array([0, 50, 50])
-    upper_orange = np.array([35, 250, 255])
-    mask = cv2.inRange(hsv, lower_orange, upper_orange)
-    return mask
-
-
-def get_bank():
-    result = dict()
-    for i in range(26):
-        result[str(i)] = get_image_from_filename_day(f"/bank/{i}.jpg", get_window())
-    return result
-
-
-def get_score(img1, img2):
-    err = np.sum((img1.astype("float") - img2.astype("float")) ** 2)
-    err /= float(img1.shape[0] * img1.shape[1])
-    return err
-
-
-def benchmark(img):
-    result = dict()
-    for i in range(26):
-        bank_image = get_bank()[str(i)]
-        comparison = get_score(bank_image, img)
-        result[i] = comparison
-    return result
-
-
-def get_time(filename):
-    current = get_image_from_filename_day(filename, get_window())
-    scores = benchmark(current)
-    print(scores)
-    print(sorted(scores, key=scores.__getitem__))
-    return min(scores, key=scores.get)
 
 
 def get_time_italy():
     f = open('/data/italy', 'r')
     timer = f.read()
     f.close()
-    return int(timer)
+    date_time_obj = datetime.datetime.strptime(timer, '%Y-%m-%d %H:%M:%S.%f')
+    now = datetime.datetime.now()
+    return max(0, int(26 - ((now - date_time_obj).total_seconds() / 60)))
 
 
 def compute_time_france_from_italy(italy_time):
@@ -80,12 +22,6 @@ def compute_time_france_from_italy(italy_time):
         return 0
     elif italy_time <= 10:
         return 25 - (10 - italy_time)
-
-
-def write_time_italy(t):
-    f = open("/data/italy", "w")
-    f.write(str(t))
-    f.close()
 
 
 @app.route("/")
@@ -103,37 +39,47 @@ def france():
     return str(compute_time_france_from_italy(get_time_italy()))
 
 
-@app.route("/stats")
-def stats():
-    results = {}
-    for i in range(26):
-        computations = []
-        for f in os.listdir(f"/tests/{i}/"):
-            t = get_time(f"/tests/{i}/{f}")
-            computations.append(t)
-        success = len([c for c in computations if c == i])
-        errors = len([c for c in computations if c != i])
-        results[i] = {
-            'total': len(computations),
-            'success': success,
-            'errors': errors,
-            'ratio': float(success) / len(computations) * 100 if len(computations) > 0 else 0
-        }
-    return render_template('stats.html',
-                           results=results)
-
-
 def download_image_camera(file, url):
     return os.system(
         f'wget --no-check-certificate --no-cache --no-cookies {url} --post-data="action=purge" --output-document={file}')
 
 
+def save_last_green_date():
+    f = open("/data/italy", "w")
+    f.write(f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')}")
+    f.close()
+
+
 def compute_time():
     code = download_image_camera("/data/current.jpg", "http://94.125.235.194:8080/record/current.jpg")
     if code == 0:
-        t = get_time("/data/current.jpg")
-        print(f"time computed: {t}")
-        write_time_italy(t)
+        color = get_color("/data/current.jpg")
+        if color == "green":
+            save_last_green_date()
+
+
+def get_camera_image():
+    download_image_camera(f"/tests/{uuid.uuid1()}.jpg", "http://94.125.235.194:8080/record/current.jpg")
+
+
+def get_color(filename):
+    img = cv2.imread(filename)[640:740, 630:660]
+    b, g, r = cv2.split(img)
+    thresh = 127
+
+    im_bw_from_r = cv2.threshold(r, thresh, 255, cv2.THRESH_BINARY)[1]
+    im_bw_from_g = cv2.threshold(g, thresh, 255, cv2.THRESH_BINARY)[1]
+
+    percent_up_from_r = cv2.countNonZero(im_bw_from_r[0:50, 0:30])
+    percent_up_from_g = cv2.countNonZero(im_bw_from_g[0:50, 0:30])
+
+    percent_down_from_r = cv2.countNonZero(im_bw_from_r[50:100, 0:30])
+    percent_down_from_g = cv2.countNonZero(im_bw_from_g[50:100, 0:30])
+
+    up = percent_up_from_r if percent_up_from_r > percent_up_from_g else 0
+    down = percent_down_from_g if percent_down_from_g > percent_down_from_r else 0
+
+    return "red" if up > down else "green"
 
 
 if __name__ == '__main__':
