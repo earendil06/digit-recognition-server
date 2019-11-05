@@ -27,7 +27,7 @@ def compute_time_france_from_italy(italy_time):
 
 
 def log(text):
-    f = open("/data/logs.txt", "w+")
+    f = open("/data/logs.txt", "a+")
     f.write(text + "\n")
     f.close()
 
