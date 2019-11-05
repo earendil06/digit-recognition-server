@@ -26,9 +26,23 @@ def compute_time_france_from_italy(italy_time):
         return 25 - (10 - italy_time)
 
 
+def log(text):
+    f = open("/data/logs.txt", "w+")
+    f.write(text + "\n")
+    f.close()
+
+
 @app.route("/")
 def home():
     return "timer"
+
+
+@app.route("/logs")
+def logs():
+    f = open("/data/logs.txt", "r")
+    text = f.read()
+    f.close()
+    return text
 
 
 @app.route("/italy")
@@ -123,13 +137,14 @@ def get_color(filename):
     #
     # return [(percent_up_from_r, percent_up_from_g, percent_up_from_b, percent_down_from_r, percent_down_from_g,
     #          percent_down_from_b), "red" if up > down else "green"]
+    log(str([percent, "red" if percent != 0 else "green"]))
     return [percent, "red" if percent != 0 else "green"]
 
 
 if __name__ == '__main__':
-    # scheduler = BackgroundScheduler()
-    # scheduler.add_job(func=compute_time, trigger="interval", seconds=15)
-    # scheduler.start()
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(func=compute_time, trigger="interval", seconds=15)
+    scheduler.start()
     #
     port = int(os.environ.get('PORT', PORT))
     app.run(host='0.0.0.0', port=port)
