@@ -5,7 +5,7 @@
 <table>
   <thead>
   <tr>
-    <th>Digit</th>
+    <th>Color</th>
     <th>Total</th>
     <th>Success</th>
     <th>Failure</th>
@@ -23,6 +23,30 @@
   </tr>
   {% endfor %}
   
+  </tbody>
+</table>
+
+
+<table>
+  <thead>
+  <tr>
+    <th>Color</th>
+    <th>File</th>
+  </tr>
+  </thead>
+  <tbody>
+  {% for f in fails['red'] %}
+  <tr>
+    <td>red</td>
+    <td>{{f}}</td>
+  </tr>
+  {% endfor %}
+  {% for f in fails['green'] %}
+  <tr>
+    <td>green</td>
+    <td>{{f}}</td>
+  </tr>
+  {% endfor %}
   </tbody>
 </table>
 {% endblock %}
